@@ -35,7 +35,15 @@ This is a simple Flask application that provides an endpoint to upload a file an
 
 ## Usage
 
-- **Upload a File:**
+- **Health check:**
+
+  Example using `curl`:
+  ```bash
+  curl -X GET http://localhost:5000/health
+  ```
+
+
+- **upload a file:**
 
   Send a POST request to the `/upload` endpoint with a file. You can use tools like `curl` or Postman for testing.
 
