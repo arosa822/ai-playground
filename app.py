@@ -38,7 +38,7 @@ def retrieve_chunks(query, index, chunks, top_k=3):
 
 
 
-@app.rout('/debug', methods=['GET'])
+@app.route('/debug', methods=['GET'])
 def print_var():
     return jsonify({"var": "1"})
 
