@@ -40,7 +40,7 @@ def retrieve_chunks(query, index, chunks, top_k=3):
 
 @app.route('/debug', methods=['GET'])
 def print_var():
-    return jsonify({"var": "1"})
+    return jsonify({"var": "2"})
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -61,10 +61,10 @@ def upload_file():
     chunks = chunk_data(file_content)
     index = create_index(chunks)
 
-    query = "What are the main errors in the test log?"
+    query = "What is the general state of the tests?, are there any authentication issues?"
     retrieved_context = "\n".join(retrieve_chunks(query, index, chunks))
 
-    prompt = f"""You are a helpful assistant reading test logs.
+    prompt = f"""You are a helpful assistant reading test logs. Give me a percentage of tests that have passed, failed and errored out. 
 
     Context:
     {retrieved_context}
