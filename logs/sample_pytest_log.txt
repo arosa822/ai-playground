@@ -1,0 +1,91 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-7.1.2, pluggy-1.0.0
+rootdir: /workspace/ai-playground
+collected 15 items
+
+test_sample.py::test_addition PASSED                                      [  6%]
+test_sample.py::test_subtraction FAILED                                   [ 13%]
+test_sample.py::test_multiplication ERROR                                 [ 20%]
+test_sample.py::test_division PASSED                                      [ 26%]
+test_sample.py::test_modulus FAILED                                       [ 33%]
+test_sample.py::test_power ERROR                                          [ 40%]
+test_sample.py::test_sqrt PASSED                                          [ 46%]
+test_sample.py::test_logarithm FAILED                                     [ 53%]
+test_sample.py::test_trigonometry ERROR                                   [ 60%]
+test_sample.py::test_factorial PASSED                                     [ 66%]
+test_sample.py::test_exponentiation PASSED                                [ 73%]
+test_sample.py::test_square_root PASSED                                   [ 80%]
+test_sample.py::test_authentication ERROR                                 [ 86%]
+test_sample.py::test_integration PASSED                                   [ 93%]
+test_sample.py::test_performance PASSED                                   [100%]
+
+=================================== FAILURES ===================================
+______________________________ test_subtraction _______________________________
+
+    def test_subtraction():
+>       assert subtract(5, 3) == 1
+E       AssertionError: assert 2 == 1
+E       assert 2 == 1
+E        +  where 2 = subtract(5, 3)
+
+test_sample.py:10: AssertionError
+_______________________________ test_modulus _________________________________
+
+    def test_modulus():
+>       assert modulus(10, 3) == 2
+E       AssertionError: assert 1 == 2
+E       assert 1 == 2
+E        +  where 1 = modulus(10, 3)
+
+test_sample.py:30: AssertionError
+_______________________________ test_logarithm ________________________________
+
+    def test_logarithm():
+>       assert logarithm(100, 10) == 2
+E       AssertionError: assert 1 == 2
+E       assert 1 == 2
+E        +  where 1 = logarithm(100, 10)
+
+test_sample.py:50: AssertionError
+================================== ERRORS ====================================
+_________________________ ERROR at setup of test_multiplication _________________________
+file /workspace/ai-playground/test_sample.py, line 20
+  @pytest.fixture
+  def setup_environment():
+E       raise RuntimeError("Failed to set up test environment")
+E       RuntimeError: Failed to set up test environment
+
+test_sample.py:20: RuntimeError
+_________________________ ERROR at setup of test_power _________________________
+file /workspace/ai-playground/test_sample.py, line 40
+  @pytest.fixture
+  def setup_power_environment():
+E       raise RuntimeError("Power environment setup failed")
+E       RuntimeError: Power environment setup failed
+
+test_sample.py:40: RuntimeError
+_________________________ ERROR at setup of test_trigonometry _________________________
+file /workspace/ai-playground/test_sample.py, line 60
+  @pytest.fixture
+  def setup_trigonometry_environment():
+E       raise RuntimeError("Trigonometry environment setup failed")
+E       RuntimeError: Trigonometry environment setup failed
+
+test_sample.py:60: RuntimeError
+_________________________ ERROR at setup of test_authentication _________________________
+file /workspace/ai-playground/test_sample.py, line 80
+  @pytest.fixture
+  def setup_authentication():
+E       raise PermissionError("Authentication failed due to invalid credentials")
+E       PermissionError: Authentication failed due to invalid credentials
+
+test_sample.py:80: PermissionError
+=========================== short test summary info ===========================
+FAILED test_sample.py::test_subtraction - AssertionError: assert 2 == 1
+ERROR test_sample.py::test_multiplication - RuntimeError: Failed to set up test environment
+FAILED test_sample.py::test_modulus - AssertionError: assert 1 == 2
+ERROR test_sample.py::test_power - RuntimeError: Power environment setup failed
+FAILED test_sample.py::test_logarithm - AssertionError: assert 1 == 2
+ERROR test_sample.py::test_trigonometry - RuntimeError: Trigonometry environment setup failed
+ERROR test_sample.py::test_authentication - PermissionError: Authentication failed due to invalid credentials
+========================= 3 failed, 4 error, 8 passed =========================
