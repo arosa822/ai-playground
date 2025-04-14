@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
+import requests
 # for the chunker
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
@@ -9,10 +8,7 @@ import numpy as np
 
 app = Flask(__name__)
 
-# Load the model
-model_name = "ZeroXClem/Llama-3.1-8B-Athena-Apollo-exp"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="auto", device_map="auto")
+MODEL_SERVICE_URL = "http://localhost:5001/generate"
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
 def chunk_data(log_text):
@@ -73,10 +69,9 @@ def upload_file():
     Answer:"""
 
 
-    # Process the file content with the model
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-    outputs = model.generate(**inputs, max_new_tokens=300)
-    response_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    # Send the prompt to the model service
+    response = requests.post(MODEL_SERVICE_URL, json={"prompt": prompt})
+    response_text = response.json().get("response", "")
 
     return jsonify({"response": response_text})
 
