@@ -18,3 +18,7 @@ clean:
 
 # Rebuild and run the Docker container
 rebuild: clean build run
+
+# Deploy the application to OpenShift
+deploy:
+	oc apply -f deployment.yaml
