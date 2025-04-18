@@ -17,6 +17,10 @@ spec:
         image: python:3.11
         command: ["sleep", "infinity"]
         imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 3000
+          fsGroup: 2000
         resources:
           requests:
             memory: "256Mi"
