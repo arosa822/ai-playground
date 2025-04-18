@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: ai-playground-app
-        image: ai-playground-app:latest
+        image: quay.io/arosa/ai-playground:latest
         ports:
         - containerPort: 5000
 ---
