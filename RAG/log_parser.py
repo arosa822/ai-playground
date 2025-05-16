@@ -3,8 +3,7 @@ from datetime import datetime
 
 def parse_log_line(log_line):
     """
-    Parses a single line from the log file. Handles different log formats and
-    extracts relevant information.
+    Parses a single line from the log file, adding a timestamp if one doesn't exist.
 
     Args:
         log_line (str): A single line from the log file.
@@ -15,79 +14,67 @@ def parse_log_line(log_line):
               'result', 'duration', etc., depending on the log line.
               Returns None if the line doesn't match any expected format.
     """
-    # Order of regexes matters - put the most specific ones first.
+
+    timestamp_regex = r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"
+    timestamp_match = re.search(timestamp_regex, log_line)
+    if timestamp_match:
+        timestamp = timestamp_match.group(0)
+        # Remove the timestamp and any following spaces for consistent parsing
+        log_line = log_line[len(timestamp):].lstrip()
+    else:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Adjusted regex patterns to handle various log formats *after* timestamp removal
     regex_patterns = [
-        # 1. Test result summary (e.g., "= 3 failed, 25 passed...")
         (r"=(?P<test_summary>.*)=$", "summary"),
-
-        # 2. Standard log line with timestamp, level, etc.
-        (r"^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) (?P<level>\w+) (?P<message>.*)$", "standard"),
-
-        # 3. Test result line (e.g., "PASSED tests/rest/...")
+        (r"^(?P<level>\w+) (?P<message>.*)$", "standard_no_timestamp"),
         (r"^(?P<result>PASS|FAIL|SKIP|ERROR)\s+(?P<test_name>[^ ]+)$", "test_result"),
-
-         # 4. Duration
         (r"^(?P<duration_message>.*in\s+(?P<duration>\d+\.\d+).*)", "duration"),
-
-        # 5. Warning
         (r"^(\s)?WARNING\s+(?P<warning_message>.*)$", "warning"),
-
-        # 6. Stack trace
-        (r"^_+$", "stack_trace_start"),  #detect start of stack trace
-        (r"^(?P<stack_trace_line>.*\/.*\.py:\d+.*)$", "stack_trace_line"), #line in stack trace
-
-        # 7. live log session
+        (r"^_+$", "stack_trace_start"),
+        (r"^(?P<stack_trace_line>.*\/.*\.py:\d+.*)$", "stack_trace_line"),
         (r"^(-{10,}\s+live log\s+session\w+\s+-{10,})$", "live_log_session"),
+        (r"^(?P<message>.*)$", "catch_all"),  # Catch-all
     ]
+
+    parsed_data = {'timestamp': timestamp}  # Initialize with timestamp
 
     for regex, log_type in regex_patterns:
         match = re.search(regex, log_line)
         if match:
-            if log_type == "standard":
-                try:
-                    timestamp_str = match.group('timestamp')
-                    timestamp = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S,%f')
-                except ValueError:
-                    print(f"Error: Invalid timestamp format: {timestamp_str}")
-                    return None
-                return {
-                    'timestamp': timestamp,
+            if log_type == "standard_no_timestamp":
+                parsed_data.update({
                     'level': match.group('level').strip(),
                     'message': match.group('message').strip(),
-                }
+                })
             elif log_type == "test_result":
-                return {
+                parsed_data.update({
                     'result': match.group('result').strip(),
                     'test_name': match.group('test_name').strip(),
-                }
+                })
             elif log_type == "summary":
-                return {
+                parsed_data.update({
                     'test_summary':  match.group('test_summary').strip()
-                }
+                })
             elif log_type == "duration":
-                return{
+                parsed_data.update({
                     'duration_message': match.group('duration_message').strip(),
                     'duration': match.group('duration').strip()
-                }
+                })
             elif log_type == "warning":
-                return{
+                parsed_data.update({
                     'warning_message': match.group('warning_message').strip()
-                }
+                })
             elif log_type == "stack_trace_start":
-                return {
-                    'stack_trace_start': True
-                }
+                parsed_data['stack_trace_start'] = True
             elif log_type == "stack_trace_line":
-                return{
-                    'stack_trace_line': match.group('stack_trace_line').strip()
-                }
+                parsed_data['stack_trace_line'] = match.group('stack_trace_line').strip()
             elif log_type == "live_log_session":
-                return{
-                    'live_log_session': log_line.strip()
-                }
-            else:
-                return None  #Should never reach here
-    return None  # Line does not match any expected format
+                parsed_data['live_log_session'] = log_line.strip()
+            elif log_type == "catch_all":
+                parsed_data['message'] = log_line.strip()
+            return parsed_data
+    return {'timestamp': timestamp, 'message': log_line.strip()}  # If no pattern matches, return timestamp and original line
 
 def read_log_file(file_path):
     """
@@ -148,6 +135,7 @@ def organize_log_data(parsed_logs):
         'long_running_tests': [],
         'stack_traces': [],
         'deselected_tests': [],
+        'log_entries': [],  # Changed from 'timestamps' to 'log_entries'
         'other_info': []
     }
 
@@ -161,16 +149,18 @@ def organize_log_data(parsed_logs):
                 organized_data['errors'].append(log_entry['test_name'])
         elif 'warning_message' in log_entry:
             organized_data['warnings'].append(log_entry['warning_message'])
-        elif 'duration' in log_entry and float(log_entry['duration']) > 10:  # Example threshold: 10 seconds
+        elif 'duration' in log_entry and float(log_entry['duration']) > 10:
             organized_data['long_running_tests'].append(log_entry['duration_message'])
         elif 'stack_trace' in log_entry:
             organized_data['stack_traces'].append(log_entry['stack_trace'])
         elif 'message' in log_entry and 'deselected' in log_entry['message']:
             organized_data['deselected_tests'].append(log_entry['message'])
-        elif 'message' in log_entry and 'REST:' in log_entry['message']: #check for message key before accessing
+        elif 'message' in log_entry and 'REST:' in log_entry['message']:
             organized_data['api_requests'].append(log_entry['message'])
+        elif 'timestamp' in log_entry:  # Capture the whole log entry
+            organized_data['log_entries'].append(log_entry)
         else:
-            organized_data['other_info'].append(log_entry) # Capture anything not matched
+            organized_data['other_info'].append(log_entry)
 
     return organized_data
 
@@ -229,6 +219,11 @@ def print_organized_data(organized_data):
         print("\nOther Information:")
         for info in organized_data['other_info']:
             print(info)
+    
+    if organized_data['log_entries']:  # Print the full log entries
+        print("\nLog Entries:")
+        for entry in organized_data['log_entries']:
+            print(entry)
 
 if __name__ == "__main__":
     log_file_path = 'sample_log.txt'
